@@ -79,13 +79,4 @@ public class SocketClient
         }
     }
 
-    static void Send(NetworkStream stream)
-    {
-        do
-        {
-            var input = Console.ReadLine() + (char)0x0D + (char)0x0A;// + (char)0x00;
-            var data = Encoding.ASCII.GetBytes(input);
-            stream.Write(data, 0, data.Length);
-        } while (true);
-    }
 }
