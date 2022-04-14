@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -10,11 +11,17 @@ using System.Threading.Tasks;
 // communication is established.
 public class SocketClient
 {
+    static DbcParserLib.DbcParser DbcParser = new DbcParserLib.DbcParser();
+
+
     public static int Main(String[] args)
     {
         StartClient();
         return 0;
     }
+
+
+
 
     public static void StartClient()
     {
@@ -22,6 +29,15 @@ public class SocketClient
 
         try
         {
+            
+            using (var dbcStream = typeof(SocketClient).Assembly.GetManifestResourceStream("TcpIpClient.Resources.CSS-Electronics-OBD2-v1.4.dbc"))
+            {
+                using (var textReader = new StreamReader(dbcStream))
+                {
+                    var text = textReader.ReadToEnd();
+                    DbcParser.ReadFromString(text);
+                }
+            }
 
             var client = new TcpClient();
             client.Connect(new IPEndPoint(IPAddress.Loopback, 23));
@@ -79,13 +95,27 @@ public class SocketClient
         }
     }
 
-    static void Send(NetworkStream stream)
+    static DbcParserLib.Signal[] GetSignals(string response)
     {
-        do
+        var blocks = response.Split(' ');
+        var id = int.Parse(blocks[0], System.Globalization.NumberStyles.HexNumber);
+        var len = int.Parse(blocks[1], System.Globalization.NumberStyles.HexNumber);
+        var service = int.Parse(blocks[2], System.Globalization.NumberStyles.HexNumber);
+        var pid = int.Parse(blocks[3], System.Globalization.NumberStyles.HexNumber);    
+
+
+        var result = new List<DbcParserLib.Signal>();
+        foreach (var message in DbcParser.Messages)
         {
-            var input = Console.ReadLine() + (char)0x0D + (char)0x0A;// + (char)0x00;
-            var data = Encoding.ASCII.GetBytes(input);
-            stream.Write(data, 0, data.Length);
-        } while (true);
+            if (message.ID == id)
+            {
+                foreach (var signal in message.Signals)
+                {
+                    //if (signal.)
+                }
+            }
+        }
+
+        return null;
     }
 }
