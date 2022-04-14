@@ -27,6 +27,7 @@ public class SocketClient
             client.Connect(new IPEndPoint(IPAddress.Loopback, 23));
             var stream = client.GetStream();
 
+            InitializeElm(stream);
             Task.Run(async () => await Listen(stream));
             Send(stream);
 
@@ -36,6 +37,30 @@ public class SocketClient
         {
             Console.WriteLine(e.ToString());
         }
+    }
+
+    static void InitializeElm(NetworkStream stream)
+    {
+        SendLine(stream, "ATI"); // welcome!
+        SendLine(stream, "AT H1");  // show ODB headers and byte count, in responses
+        SendLine(stream, "AT SH 7E0"); // use the "default" header, in case it's not already in use
+        SendLine(stream, "AT E0");  // echo off
+    }
+
+    static void Send(NetworkStream stream)
+    {
+        do
+        {
+            var line = Console.ReadLine();
+            SendLine(stream, line);
+        } while (true);
+    }
+
+    static void SendLine(NetworkStream stream, string line)
+    {
+        var input = line + (char)0x0D + (char)0x0A;// + (char)0x00;
+        var data = Encoding.ASCII.GetBytes(input);
+        stream.Write(data, 0, data.Length);
     }
 
     static async Task Listen(NetworkStream stream)
