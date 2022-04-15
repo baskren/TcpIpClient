@@ -10,6 +10,13 @@ using System.Threading.Tasks;
 // communication is established.
 public class SocketClient
 {
+    const int OdbDevicePort = 35000;
+    static readonly IPAddress OdbDeviceAddress = IPAddress.Parse("192.168.0.10");
+    //static readonly IPAddress OdbDeviceAddress = IPAddress.Loopback;
+
+    static Aptiv.DBCFiles.DBCFile BaseDbc;
+    static Aptiv.DBCFiles.DBCFile Gen1PriusDbc;
+    static Aptiv.DBCFiles.DBCFile Gen2PriusDbc;
     public static int Main(String[] args)
     {
         StartClient();
@@ -18,16 +25,31 @@ public class SocketClient
 
     public static void StartClient()
     {
-        //byte[] bytes = new byte[1024];
-
         try
         {
+            /*
+            using (var dbcStream = typeof(SocketClient).Assembly.GetManifestResourceStream("TcpIpClient.Resources.prius_test_battery_r5.dbc"))
+            {
+                Gen2PriusDbc = Aptiv.DBCFiles.DBCFile.Load(dbcStream);
+            }
 
+            using (var dbcStream = typeof(SocketClient).Assembly.GetManifestResourceStream("TcpIpClient.Resources.Prius-2010.dbc"))
+            //using (var dbcStream = typeof(SocketClient).Assembly.GetManifestResourceStream("TcpIpClient.Resources.CSS-Electronics-OBD2-v1.4.dbc"))
+            {
+                Gen1PriusDbc = Aptiv.DBCFiles.DBCFile.Load(dbcStream);
+            }
+
+            using (var dbcStream = typeof(SocketClient).Assembly.GetManifestResourceStream("TcpIpClient.Resources.CSS-Electronics-OBD2-v1.4.dbc"))
+            {
+                BaseDbc = Aptiv.DBCFiles.DBCFile.Load(dbcStream);
+            }
+            */
             var client = new TcpClient();
-            client.Connect(new IPEndPoint(IPAddress.Loopback, 23));
+
+            client.Connect(new IPEndPoint(OdbDeviceAddress, OdbDevicePort));
             var stream = client.GetStream();
 
-            InitializeElm(stream);
+            //InitializeElm(stream);
             Task.Run(async () => await Listen(stream));
             Send(stream);
 
@@ -43,7 +65,7 @@ public class SocketClient
     {
         SendLine(stream, "ATI"); // welcome!
         SendLine(stream, "AT H1");  // show ODB headers and byte count, in responses
-        SendLine(stream, "AT SH 7E0"); // use the "default" header, in case it's not already in use
+        SendLine(stream, "AT SH 7E0"); // use the "main ECU" header, in case it's not already in use
         SendLine(stream, "AT E0");  // echo off
     }
 
